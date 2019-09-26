@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "reader.h"
+#include <unistd.h>
+#include "procInfo.h"
 
 
 /*
@@ -20,104 +21,41 @@
 */
 
 
-
-
-ProcInfo * readCommand(char* line) {
-	char* command = strtok(line, " ");
-	char* nomeProc = strtok(NULL, " \n");
-	char* tipoProc = strtok(NULL, "=");
-	ProcInfo * procInfo = (ProcInfo *)malloc(sizeof(ProcInfo));
-	if (strcmp(command, "Run") == 0) {
-		if(tipoProc == NULL) /* ROUND ROBIN */ {
-			procInfo->tipoProc = (char*)malloc(12 * sizeof(char));
-			strcpy(procInfo->tipoProc, "Round Robin");
-
-			procInfo->nomeProc = (char*)malloc((strlen(nomeProc) + 1) * sizeof(char));
-			strcpy(procInfo->nomeProc, nomeProc);
-
-			procInfo->I = (char*)malloc(1 * sizeof(char));
-			strcpy(procInfo->I, "");
-
-			procInfo->D = (char*)malloc(1 * sizeof(char));
-			strcpy(procInfo->D, "");
-
-			procInfo->PR = (char*)malloc(1 * sizeof(char));
-			strcpy(procInfo->PR, "");
-			
-			
-		}
-		else if (strcmp(tipoProc, "I") == 0) /* REAL TIME */ {
-			char* I, * D;
-			I = strtok(NULL, " ");
-			strtok(NULL, "=");
-			D = strtok(NULL, " ");
-			
-			procInfo->tipoProc = (char*)malloc(10 * sizeof(char));
-			strcpy(procInfo->tipoProc, "Real Time");
-
-			procInfo->nomeProc = (char*)malloc((strlen(nomeProc) + 1) * sizeof(char));
-			strcpy(procInfo->nomeProc, nomeProc);
-
-			procInfo->I = (char*)malloc((strlen(I) + 1) * sizeof(char));
-			strcpy(procInfo->I, I);
-
-			procInfo->D = (char*)malloc((strlen(D) + 1) * sizeof(char));
-			strcpy(procInfo->D, D);
-
-			procInfo->PR = (char*)malloc(1 * sizeof(char));
-			strcpy(procInfo->PR, "");
-
-		}
-		else if (strcmp(tipoProc, "PR") == 0) /* PRIORIDADE */ {
-			char* PR;
-			PR = strtok(NULL, " ");
-
-			procInfo->tipoProc = (char*)malloc(11 * sizeof(char));
-			strcpy(procInfo->tipoProc, "Prioridade");
-
-			procInfo->nomeProc = (char*)malloc((strlen(nomeProc) + 1) * sizeof(char));
-			strcpy(procInfo->nomeProc, nomeProc);
-
-			procInfo->PR = (char*)malloc((strlen(PR) + 1) * sizeof(char));
-			strcpy(procInfo->PR, PR);
-
-			procInfo->I = (char*)malloc(1 * sizeof(char));
-			strcpy(procInfo->I, "");
-
-			procInfo->D = (char*)malloc(1 * sizeof(char));
-			strcpy(procInfo->D, "");
-
-		}
-		
-	}
-	else {
-
-	}
-	return procInfo;
-}
-
-
-
-int main(void) {
-	FILE* listaProc;
+int main(int argc, char * argv[]) {
+	char * buf;
+	int buf_size;
 	char s[50];
+	FILE* listaProc;
+	int pipeWriterNum;
 	ProcInfo * procInfo = NULL;
 	listaProc = fopen("processos.txt", "r");
+	
+	pipeWriterNum = atoi(argv[1]);
+	
 	if (listaProc == NULL) {
 		printf("Erro ao abrir arquivo \n");
 		exit(1);
 	}
 
 	while (1) {
-		fgets(s, 50, listaProc); //TODO
+		fgets(s, 50, listaProc);
 		if (feof(listaProc)) {
 			break;
 		}
 		procInfo = readCommand(s);
-		printf("%s\n",procInfo->nomeProc);
-		printf("%s\n",procInfo->tipoProc);
-	}
+		buf = serializeProcInfo(procInfo,&buf_size);
+		/*
+		printf("buf_size: %d\n",buf_size);
+		printf("primeiro valor de buf: %s\n",buf);
+		printf("Bytes escritos no pipe: %d\nValor: %d\n",write(pipeWriterNum, &buf_size, sizeof(int)),buf_size);
+		printf("Bytes escritos no pipe: %d\nValor: %s\n",write(pipeWriterNum, buf, buf_size),buf);
+		*/
+		write(pipeWriterNum, &buf_size, sizeof(int));
+		write(pipeWriterNum, buf, buf_size);
 
+		sleep(4);
+	}
+	
 	fclose(listaProc);
 	return 0;
 }
