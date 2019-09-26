@@ -1,0 +1,29 @@
+Passos Escalonador:
+
+Ocupado[60];
+Lista das prioridades;
+Timer = 0;
+
+Recebeu um processo novo:
+	Real Time:
+		1. I = Processo P -> I = I+D do processo P;
+		2. I+D > 60? ERRO;
+		3. Algum segundo de I até D ocupados? ERRO;
+		4. Marcar segundos de I até D como ocupados (colocar um ID do processo/um ponteiro pro próprio processo no vetor);
+		5. ?
+	Prioridade:
+		1. Percorrer Lista até achar o local correspondente a prioridade escolhida;
+		2. Inserir na Lista;
+	Round Robin:
+		1. Inserir no Final da Lista. (Junto com algum indicador que mostre que é um processo round robin, para a divisão de 0.5 segundos?);
+
+Execução:
+	Se ocupado[Timer]>0:
+		Roda o processo em ocupado[timer] pela duração do mesmo;
+		Timer = ((Timer+Duração)%60);
+		
+	Senão:
+		Executar os processos de prioridade e round robin de acordo com as regras dos mesmos durante 1 segundo (talvez pulando o round robin caso seus 0.5 segundos forem alcançar um segundo ocupado?);
+		Timer = (Timer+1)%60;
+	
+		
