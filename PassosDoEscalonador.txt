@@ -19,11 +19,10 @@ Recebeu um processo novo:
 
 Execução:
 	Se ocupado[Timer]>0:
-		Roda o processo em ocupado[timer] pela duração do mesmo;
-		Timer = ((Timer+Duração)%60);
+		Roda o processo em ocupado[timer]
 		
 	Senão:
-		Executar os processos de prioridade e round robin de acordo com as regras dos mesmos durante 1 segundo (talvez pulando o round robin caso seus 0.5 segundos forem alcançar um segundo ocupado?);
-		Timer = (Timer+1)%60;
+		Executar os processos de prioridade e round robin de acordo com as regras dos mesmos (talvez pulando o round robin caso seus 0.5 segundos forem alcançar um segundo ocupado?);
+	Timer = (Timer+1)%60;
 	
 		
