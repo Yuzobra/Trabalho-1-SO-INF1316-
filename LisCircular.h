@@ -1,14 +1,14 @@
 typedef struct no {
-	//void *pProg;		//Ponteiro pro programa
-	int pProg;
+	//void *pid;		//Ponteiro pro programa
+	int pid;
 	int pos;			//Posição Na Lista
 	struct no *prox;	//Ponteiro pro próximo nó
 	struct no *ant;		//Ponteiro pro nó anterior
 }No;
 
-No* CriaLista(int pProg);
+No* CriaLista(int pid);
 
-No* insereElemento(No *lista, int pProg);
+No* insereElemento(No *lista, int pid);
 
 No* removeElemento(No *lista);
 

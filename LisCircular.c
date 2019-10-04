@@ -4,21 +4,21 @@
 
 
 
-No * CriaLista(int pProg){
+No * CriaLista(int pid){
 	No *novo;
 	novo = (No*)malloc(sizeof(No));
-	novo->pProg = pProg;
+	novo->pid = pid;
 	novo->pos = 0;
 	novo->prox = novo;
 	novo->ant = novo;
 	return novo;
 }
 
-No * insereElemento(No *lista,int pProg) {
+No * insereElemento(No *lista,int pid) {
 	No *aux;
 	No *novo;
 	novo = (No*)malloc(sizeof(No));
-	novo->pProg = pProg;
+	novo->pid = pid;
 	novo->prox = lista->prox;
 	lista->prox = novo;
 	novo->ant = lista;
@@ -78,10 +78,10 @@ void printaLista(No *lista) {
 	while (lista->pos != 0) {
 		lista = lista->prox;
 	}
-	printf("{%d ,pos: %d, ant: %d, prox:%d}\t", lista->pProg, lista->pos, lista->ant->pProg, lista->prox->pProg);
+	printf("{%d ,pos: %d, ant: %d, prox:%d}\t", lista->pid, lista->pos, lista->ant->pid, lista->prox->pid);
 	lista = lista->prox;
 	while (lista->pos > 0) {
-		printf("{%d ,pos: %d, ant: %d, prox:%d}\t", lista->pProg, lista->pos, lista->ant->pProg, lista->prox->pProg);
+		printf("{%d ,pos: %d, ant: %d, prox:%d}\t", lista->pid, lista->pos, lista->ant->pid, lista->prox->pid);
 		lista = lista->prox;
 	}
 	printf("\n");
