@@ -4,56 +4,64 @@
 
 
 
-No * CriaLista(int pid){
+No * CriaLista(){
 	No *novo;
 	novo = (No*)malloc(sizeof(No));
-	novo->pid = pid;
-	novo->pos = 0;
+	novo->pid = 0;
+	novo->prio = 0;
 	novo->prox = novo;
 	novo->ant = novo;
 	return novo;
 }
 
-No * insereElemento(No *lista,int pid) {
-	No *aux;
+No * achaPos(No *lista, int prio){
+	int flag = 0;
+	No *aux = lista;
+	while(1){
+		if(flag!=0){
+			if(lista==aux){return lista;}
+		}
+		flag = 1;
+		if(lista->prio > prio){
+			lista = lista->ant;
+		}
+		else {
+			if(lista->prox->prio > prio){
+				return lista;
+			}
+			lista = lista->prox;
+		}
+	}
+}
+
+No * insereElemento(No *lista,int pid,int prio) {
 	No *novo;
+	if(lista->pid==0){	//primeiro elemento
+		lista->pid=pid;
+		lista->prio=prio;
+		return lista;
+	}
+	lista = achaPos(lista,prio);
 	novo = (No*)malloc(sizeof(No));
 	novo->pid = pid;
 	novo->prox = lista->prox;
 	lista->prox = novo;
 	novo->ant = lista;
 	novo->prox->ant = novo;
-	novo->pos = lista->pos + 1;
-	aux = novo->prox;
-	while(aux->pos>=novo->pos){	//aumenta em 1 a posição de todos os nós que vierem a seguir
-		aux->pos++;
-		aux = aux->prox;
-	}
+	novo->prio = prio;
 	return novo;
 }
 
 No * removeElemento(No *lista) {
 	No *aux;
-	if(lista->prox==lista->ant){
-		if(lista->prox==lista){
-			printf("Não é possível remover último elemento da lista");
-			return NULL;
-		}
-		aux = lista->prox;
-		free(lista);
-		aux->prox = aux;
-		aux->ant = aux;
-		aux->pos = 0;
-		return aux;
-	}
-	lista->ant->prox = lista->prox;
-	lista->prox->ant = lista->ant;
-	aux = lista->prox;
-	while (aux->pos>=lista->pos) {	//diminue em 1 a posição de todos os nós que vierem a seguir
-		aux->pos--;
-		aux = aux->prox;
+	if(lista->prox==lista){
+		lista->pid=0;
+		lista->prio=0;
+		return lista;
 	}
 	aux = lista->ant;
+	aux->prox=lista->prox;
+	lista->prox->ant=aux;
 	free(lista);
 	return aux;
 }
@@ -67,7 +75,7 @@ No * antElem(No *lista){
 }
 
 void destroiLista(No *lista) {
-	while (lista->prox != lista) {
+	while (lista->pid) {
 		lista = removeElemento(lista);
 	}
 	free(lista);
@@ -75,13 +83,17 @@ void destroiLista(No *lista) {
 }
 
 void printaLista(No *lista) {
-	while (lista->pos != 0) {
-		lista = lista->prox;
-	}
-	printf("{%d ,pos: %d, ant: %d, prox:%d}\t", lista->pid, lista->pos, lista->ant->pid, lista->prox->pid);
-	lista = lista->prox;
-	while (lista->pos > 0) {
-		printf("{%d ,pos: %d, ant: %d, prox:%d}\t", lista->pid, lista->pos, lista->ant->pid, lista->prox->pid);
+	int flag = 0;
+	No *aux = lista;
+	while (lista->prio > 0) {
+		if(flag!=0){
+			if(lista==aux){
+				printf("\n");
+				return;
+			}
+		}
+		flag=1;
+		printf("{%d ,prio: %d, ant: %d, prox:%d}\t", lista->pid, lista->prio, lista->ant->pid, lista->prox->pid);
 		lista = lista->prox;
 	}
 	printf("\n");
