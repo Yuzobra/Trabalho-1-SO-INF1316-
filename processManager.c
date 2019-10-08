@@ -13,26 +13,22 @@
 
 #include <signal.h>
 
-//#include<sys/ipc.h>
-//#include<sys/shm.h>
-//#include<sys/stat.h>
-
 #include "procInfo.h"
 #include "LisCircular.h"
 
-//#define NUM_MAX_DE_PROCESSOS 16;
-
 ProcInfo * getProcInfo(int fd[]);
 
+void AlrmHandler(int sinal)
+{
+	flag = 1;
+}
 
-
+int flag = 0; //flag que diz se o processo deve escalonar ou olhar a pipe
 
 int main (int argc, char *argv[]) { 
 	
 	int pid, i,fd[2], sizeOfProcInfo;
 	char serializedProcInfo[100];
-
-	//int s = shmget(IPC_PRIVATE, NUM_MAX_DE_PROCESSOS * (sizeof(No)), IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
 
 	if(pipe(fd) < 0){
 			printf("Erro ao criar pipe");
@@ -65,35 +61,41 @@ int main (int argc, char *argv[]) {
 		}
 		
 		else if(i == 1) /* processo 2 */{
-		/* Este processo irá ficar monitorando o pipe para verificar se há algum processo novo a ser adicionado à lista */
-			char path[] = "/root/Codes/SO/Trab1/";
+			No * listaProcs = criaLista();
 			ProcInfo *procInfo;
-			No * lista;
-			printf("Iniciando processo 2\n");
-
+			signal(SIGALMR, alarmhandler); 
 			while(1){
-				//close(fd[1]);
-				procInfo = getProcInfo(fd);
-				printf("Nome do Processo: %s\n", procInfo->nomeProc);
-				printf("Tipo do Processo: %s\n", procInfo->tipoProc);
-				strcat(path,procInfo->NomeProc);
-				if ((pid = fork()) == 0) {
-					execv("path");
+				if(flag==0){
+					
+					procInfo = getProcInfo(fd);									//precisamos fazer isso ser non-blocking (trocar pra FIFO talvez?)
+					printf("Nome do Processo: %s\n", procInfo->nomeProc);
+					printf("Tipo do Processo: %s\n", procInfo->tipoProc);
+					
+					char nome[] = "./";
+					strcat(nome,procInfo->NomeProc);
+					if ((pid = fork()) == 0) {
+						char *const * arg = {NULL}
+						execve(nome;arg;NULL);
+					}
+					kill(pid, SIGSTOP); //interrompe o recém nascido
+					if(procInfo->I==NULL){
+						int prioridade = procInfo->PR;
+						if(prioridade == NULL) {prioridade = 8;}
+						lista = insereElemento(listaProcs, pid, prioridade);
+					}
+					
 				}
-				kill(pid, SIGSTOP);
-				if (lista == NULL) {
-					lista = criaLista(pid);
+				else{
+					
+					
+					
+					flag == 0;
 				}
-				else {
-					lista = insereElemento(lista, pid);
-				}
-
-			}
+			}	
 		}
 		
 		else if(i == 2) /* processo 3 */{
-		/* Este processo cuida do escalonamento em si */
-			printf("Iniciando processo 3\n");				
+					
 		} 
 	}
 	else{
