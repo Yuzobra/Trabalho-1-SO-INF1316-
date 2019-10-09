@@ -1,4 +1,4 @@
-Run P1 I=10 D=10
-Run P2 PR=9
-Run P3
-Run P4 I=P1 D=10
+Run ZprocessoA1 PR=1
+Run ZprocessoB1 PR=1
+Run ZprocessoA4 PR=4
+Run ZprocessoR1

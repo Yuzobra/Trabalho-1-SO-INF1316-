@@ -66,12 +66,14 @@ int main (int argc, char *argv[]) {
 			int pidProc;
 			ProcInfo *procInfo;
 			signal(SIGALRM, AlrmHandler); 
+			alarm(1);
 			while(1){
-				if(flag==0) /* Pode se inserir um novo processo na lista de processos*/ {
+				if(flag==0) /* Procura um processo novo na pipe e trata sua chegada da maneira apropriada*/ {
 					if((procInfo = getProcInfo(fd)) != NULL) /* Há um processo novo*/ {
-						printf("Nome do Processo: %s\n", procInfo->nomeProc);
+						printf("\nNome do Processo: %s\n", procInfo->nomeProc);
 						printf("Tipo do Processo: %s\n", procInfo->tipoProc);
-						
+						fflush(stdout);
+
 						char *nome = (char*) malloc (sizeof(char)*(3+strlen(procInfo->nomeProc))); 
 						nome[0] = '.';
 						nome[1] = '/';
@@ -83,35 +85,38 @@ int main (int argc, char *argv[]) {
 							execv(arg[0], arg);
 						}
 						else{
-							kill(pidProc, SIGSTOP); //interrompe o recém nascido
-							if(procInfo->I==NULL) /* Prioridade ou Round Robin */ {
+							kill(pidProc, SIGSTOP); /*interrompe o recém nascido*/
+							if (*procInfo->I == '\0') /* Prioridade ou Round Robin */ {
 								int prioridade;
-								if(procInfo->PR == NULL) /* Round Robin */ {prioridade = 8;}
-								else /* Prioridade */{prioridade = atoi(procInfo->PR);}
-								listaProcs = insereElemento(listaProcs, pid, prioridade);  //este insereElemento vai inserir na posição correta (?)
+								if (*procInfo->PR == '\0') /* Round Robin */ { 
+									prioridade = 8; }
+								else /* Prioridade */ { prioridade = atoi(procInfo->PR); }
+								printf("\nPrioridade: %d\n", prioridade);
+								fflush(stdout);
+								listaProcs = insereElemento(listaProcs, pidProc, prioridade);  /* este insereElemento vai inserir na posição correta */
 							}
 							else /* Real Time*/ {
-							
-								if(afterRTProc(procInfo)) /* Process starts after another Real Time process */ {
-								
+								if (afterRTProc(procInfo)) /* Process starts after another Real Time process */ {
+
 								}
-								else /* Process starts at arbitrary time */{
-								
+								else /* Process starts at arbitrary time */ {
+
 								}
+
 							}
 						}
 					}
 				}
 
-				else /* Um processo acabou de ser interrompido */ {
+				else /* Um processo acabou de ser interrompido */ {					
 					
-					/*				
-					
-					
-					
-					*/
-					
+					printf("\n");
+					kill(listaProcs->pid, SIGSTOP);
+					listaProcs = proxElem(listaProcs);
+					kill(listaProcs->pid, SIGCONT);
+					ualarm(500000,0);
 					flag = 0;
+
 				}
 			}	
 		}
@@ -140,7 +145,6 @@ ProcInfo * getProcInfo(int fd[]){
 	char serializedProcInfo[100];
 	ProcInfo *procInfo ;
 
-	printf("Estou lendo do pipe\n");
 	if((read(fd[0],&sizeOfProcInfo,sizeof(int))) > 0 ) /* Há informação na pipe*/ {
 		read(fd[0],serializedProcInfo,sizeOfProcInfo);		
 		

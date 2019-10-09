@@ -19,15 +19,15 @@ No * achaPos(No *lista, int prio){
 	No *aux = lista;
 	while(1){
 		if(flag!=0){
-			if(lista==aux){return lista;}	//se eu já dei a volta inteira na lista, coloco aonde eu estou (lista com todos os elementos de mesma prioridade)
+			if(lista==aux){return lista->ant;}	//se eu já dei a volta inteira na lista, coloco aonde estou (lista com todos os elementos de mesma prioridade)
 		}									//a flag é apenas para que esse check não seja feito na primeira iteração
 		flag = 1;
 		if(lista->prio > prio){				//se a prioridade do elemento corrente for maior, vai pro anterior
 			lista = lista->ant;
 		}
 		else {								//se não for, vai para o próximo, mas antes:
-			if(lista->prox->prio > prio){	//checa se a prioridade do próximo é maior que a dele mesmo, se for é ali mesmo que deve ser inserido
-				return lista;
+			if (lista->prox->prio > prio || lista->prox->prio < lista->prio) {	//checa se a prioridade do próximo é maior que a dele mesmo, se for é ali mesmo que deve ser inserido
+				return lista;													//(também checa se a do próximo é menor que a do atual, pois se for, é porquê sou o maior da lista)
 			}
 			lista = lista->prox;
 		}
