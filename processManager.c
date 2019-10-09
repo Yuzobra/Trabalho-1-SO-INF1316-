@@ -97,10 +97,13 @@ int main (int argc, char *argv[]) {
 					
 				}
 				else /* Um processo acabou de ser interrompido (é para isso que serve esse bloco né ?? || honestamente não me lembro mais ) */ {
+					// ^ Interrompido por falta de tempo, sim, mas não por morte, se ele morrer temos que tratar na handling de SIGCHLD, mas isso a gente só vai poder fazer depois
 					
 					/*
 					OBS:ISTO DEVE SER ENVOLTO EM UM MUTEX, PARA QUE NAO SEJA INTERROMPIDO CASO HAJA UM NOVO SIGALRM
 					O SIGALRM TMB DEVE SER ENVOLTO NESTE MUTEX, PARA QUE AGUADE O FIM DA EXECUÇÃO DESTE BLOCO
+
+					Não precisa não! Nunca vai chegar dois alarmes pois é esse mesmo bloco de código que ira setar um alarme para ele mesmo com a duração desejada.
 					
 					
 					
