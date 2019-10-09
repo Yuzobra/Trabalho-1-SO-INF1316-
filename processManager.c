@@ -102,6 +102,7 @@ int main (int argc, char *argv[]) {
 						}
 					}
 				}
+
 				else /* Um processo acabou de ser interrompido */ {
 					
 					/*				
