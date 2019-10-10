@@ -20,6 +20,7 @@
 ProcInfo * getProcInfo(int fd[]);
 
 void AlrmHandler(int sinal);
+void ChildHandler(int sinal);
 int afterRTProc(ProcInfo *);
 
 int flag = 0; //flag que diz se o processo deve escalonar ou olhar a pipe
@@ -49,7 +50,6 @@ int main (int argc, char *argv[]) {
 
 		if(i == 0) /* processo 1 */{
 		 /* Este processo irá executar o reader */
-
 			printf("Iniciando processo 1\n");
 		 	char arg[12];
 			char * arr[3];
@@ -65,7 +65,8 @@ int main (int argc, char *argv[]) {
 			No * listaProcs = CriaLista();
 			int pidProc;
 			ProcInfo *procInfo;
-			signal(SIGALRM, AlrmHandler); 
+			signal(SIGALRM, AlrmHandler);
+			signal(SIGCHLD, ChildHandler);
 			alarm(1);
 			while(1){
 				if(flag==0) /* Procura um processo novo na pipe e trata sua chegada da maneira apropriada*/ {
@@ -108,7 +109,7 @@ int main (int argc, char *argv[]) {
 					}
 				}
 
-				else /* Um processo acabou de ser interrompido */ {					
+				else if(flag==1) /* Um processo acabou de ser interrompido */ {					
 					
 					printf("\n");
 					kill(listaProcs->pid, SIGSTOP);
@@ -117,6 +118,18 @@ int main (int argc, char *argv[]) {
 					ualarm(500000,0);
 					flag = 0;
 
+				}
+				else if (flag > 1) { /* Um processo foi terminado (flag = pid do processo terminado)*/
+					int pidRemovido = flag;
+					printf("\nRemovendo Processo\n");
+					if (pidRemovido == listaProcs->pid) { /* Se o processo é o que está rodando atualmente, desliga o alarme e fala pra próxima iteração do while escalonar*/
+						ualarm(0, 0);
+						flag = 1;
+					}
+					else { /* Se o processo terminado não é o que está rodando, continua normalmente */
+						flag = 0;
+					}
+					listaProcs = removeElemento(listaProcs,pidRemovido);
 				}
 			}	
 		}
@@ -159,10 +172,17 @@ ProcInfo * getProcInfo(int fd[]){
 	}
 }
 
-
 void AlrmHandler(int sinal)
 {
 	flag = 1;
+}
+
+void ChildHandler(int sig) {
+	int pidf;
+	pidf = waitpid((pid_t)(-1), 0, WNOHANG);
+	if (pidf > 0) {
+		flag = pidf;
+	}
 }
 
 int afterRTProc(ProcInfo * procInfo){
@@ -171,6 +191,6 @@ int afterRTProc(ProcInfo * procInfo){
 		if(*c < 48 || *c > 57) return 0;
 	}
 	return 1;
-}
+} 
 
 

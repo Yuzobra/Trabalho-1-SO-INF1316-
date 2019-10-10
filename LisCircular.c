@@ -54,19 +54,26 @@ No * insereElemento(No *lista,int pid,int prio) {
 	return aux;
 }
 
-/*Função que remove o elemento atual da lista*/
-No * removeElemento(No *lista) {
+/*Função que remove um elemento da lista*/
+No * removeElemento(No *lista, int pid) {
 	No *aux;
-	if(lista->prox==lista){ //se estou tentando remover o último elemento, o elemento é apenas transformado em um elemento vazio
-		lista->pid=0;
-		lista->prio=0;
+	No *pos = lista;
+	if (lista->prox == lista) { //se estou tentando remover o último elemento, o elemento é apenas transformado em um elemento vazio
+		lista->pid = 0;
+		lista->prio = 0;
 		return lista;
 	}
+	while (lista->pid != pid) {
+		lista = lista->prox;
+	}
+	if (lista == pos) {
+		pos = lista->ant;
+	}
 	aux = lista->ant;
-	aux->prox=lista->prox;
-	lista->prox->ant=aux;
+	aux->prox = lista->prox;
+	lista->prox->ant = aux;
 	free(lista);
-	return aux;
+	return pos;				//retorna a lista aonde eu estava anteriormente (ou no Nó anterior, se o atual foi removido)
 }
 
 /*Função que avança o nó corrente*/
@@ -82,7 +89,7 @@ No * antElem(No *lista){
 /*Função que libera a lista inteira*/
 void destroiLista(No *lista) {
 	while (lista->pid) {				//quando o pid for zero, é por que só sobrou o elemento final (vazio)
-		lista = removeElemento(lista);
+		lista = removeElemento(lista,lista->pid);
 	}
 	free(lista);
 	return;

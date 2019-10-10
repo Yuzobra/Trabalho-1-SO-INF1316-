@@ -12,8 +12,8 @@ No* CriaLista();
 /*Função que insere um elemento*/
 No* insereElemento(No *lista, int pid, int prio);
 
-/*Função que remove o elemento atual da lista*/
-No* removeElemento(No *lista);
+/*Função que remove um elemento da lista*/
+No* removeElemento(No *lista, int pid);
 
 /*Função que avança o nó corrente*/
 No* proxElem(No *lista);
