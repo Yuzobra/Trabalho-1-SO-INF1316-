@@ -18,6 +18,8 @@
 
 #include "procInfo.h"
 #include "LisCircular.h"
+#include "LisEncadeada.h"
+
 
 ProcInfo * getProcInfo(int fd[]);
 
@@ -40,6 +42,9 @@ int main (int argc, char *argv[]) {
 	int pidreader,fd[2], sizeOfProcInfo,i, pidProcRealTime = -1;
 	RealTimeProc * realTime[60];
 	clock_t startTime;
+	Lista * waitingList;
+
+	waitingList = criaLista();
 	if(pipe(fd) < 0){
 			printf("Erro ao criar pipe");
 			exit(1);		
@@ -97,8 +102,9 @@ int main (int argc, char *argv[]) {
 					int k,I,D;
 					int currentTime = (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60;
 					RealTimeProc * realTimeProcInfo = realTime[currentTime]; // Processo tempo real de dado segundo
-					I = atoi(realTimeProcInfo->procInfo->I);
-					D = atoi(realTimeProcInfo->procInfo->D);
+					ProcInfo * procMorrendo = realTimeProcInfo->procInfo;
+					I = atoi(procMorrendo->I);
+					D = atoi(procMorrendo->D);
 					pidProcRealTime = -1;
 					flag = 1;
 					flagRemove = 0;
@@ -107,10 +113,18 @@ int main (int argc, char *argv[]) {
 						free(realTime[k]);
 						realTime[k] = NULL;
 					}
+					if(!listaVazia(waitingList)) /* Verifica se há processo esperando o fim deste, se há, coloca ele no vetor de realTime */ {
+						RealTimeProc * priorityProcInfo = verificaLista(waitingList,procMorrendo,realTime);
+						if(priorityProcInfo != NULL) {
+							I = atoi(priorityProcInfo->procInfo->I);
+							D = atoi(priorityProcInfo->procInfo->D);
+							for(k = I; k < I+D; k++){
+								realTime[k] = priorityProcInfo;
+							}
+						}
+					}
+					free(procMorrendo);
 					alarm(0);
-					//CHECAR SE EXISTE UM PROCESSO ESPERANDO O FIM DESTE TODO
-
-
 				}
 				else { /* Se o processo terminado não é o que está rodando, continua normalmente */
 					flagRemove = 0;
@@ -122,13 +136,14 @@ int main (int argc, char *argv[]) {
 			if ((procInfo = getProcInfo(fd)) != NULL) /* Há um processo novo*/ {
 				printf("\nNome do Processo: %s\n", procInfo->nomeProc);
 				printf("Tipo do Processo: %s\n", procInfo->tipoProc);
+				printf("Inicio do Processo: %s\n", procInfo->I);
+				printf("Duracao do Processo: %s\n", procInfo->D);
+				printf("Prioridade do Processo: %s\n", procInfo->PR);
 				fflush(stdout);
-
 				char *nome = (char*)malloc(sizeof(char)*(3 + strlen(procInfo->nomeProc)));
 				nome[0] = '.';
 				nome[1] = '/';
 				nome[2] = '\0';
-
 				strcat(nome, procInfo->nomeProc);
 				if ((pidProc = fork()) == 0) /* Cria o novo processo */ {
 					char *arg[] = { nome,NULL };
@@ -163,10 +178,12 @@ int main (int argc, char *argv[]) {
 										strcpy(procInfo->I, strI);
 										for(; k < I + D; k++){
 											if(realTime[k] != NULL) /* Já existe um processo que ocorre durante esse tempo */ {
+												RealTimeProc *newProc = (RealTimeProc*)malloc(sizeof(RealTimeProc));
+												newProc->pid = pidProc;
+												newProc->procInfo = procInfo;
+												printf("Processos conflitantes, colocando ele na lista de espera");
+												insFinal(waitingList, newProc);
 												break;
-
-												//TODO
-
 											}
 										}
 										if(k == (D+I)) /* Processo pode rodar normalmente */{
@@ -183,26 +200,23 @@ int main (int argc, char *argv[]) {
 									}
 								}
 							}							
-
-							//TODO
-
-
 						}
 						else /* Process starts at arbitrary time */ {
 							int k, I, D;
 							I = atoi(procInfo->I);
 							D = atoi(procInfo->D);
-							
 							if(I + D > 60){
 								printf("O processo %s possui um tempo de execucao invalido, sera descartado", procInfo->nomeProc);
 								continue;
 							}
 							for(k = I; k < I + D; k++){
 								if(realTime[k] != NULL) /* Já existe um processo que ocorre durante esse tempo */ {
+									RealTimeProc *newProc = (RealTimeProc*)malloc(sizeof(RealTimeProc));
+									newProc->pid = pidProc;
+									newProc->procInfo = procInfo;
+									printf("Processos conflitantes, colocando ele na lista de espera");
+									insFinal(waitingList, newProc);
 									break;
-
-									//TODO
-
 								}
 							}
 							if(k == (D+I)) /* Processo pode rodar normalmente */{

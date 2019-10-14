@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "LisCircular.h"
 
-/*Função que cria a lista com um único elemento nulo*/
+/*Funï¿½ï¿½o que cria a lista com um ï¿½nico elemento nulo*/
 No * CriaLista(){
 	No *novo;
 	novo = (No*)malloc(sizeof(No));
@@ -13,37 +13,37 @@ No * CriaLista(){
 	return novo;
 }
 
-/*Função que acha a posição da lista na qual um elemento deve ser inserido*/
+/*Funï¿½ï¿½o que acha a posiï¿½ï¿½o da lista na qual um elemento deve ser inserido*/
 No * achaPos(No *lista, int prio){
 	int flag = 0;
 	No *aux = lista;
 	while(1){
 		if(flag!=0){
-			if(lista==aux){return lista;}	//se eu já dei a volta inteira na lista, coloco aonde estou (lista com todos os elementos de mesma prioridade)
-		}									//a flag é apenas para que esse check não seja feito na primeira iteração
+			if(lista==aux){return lista;}	//se eu jï¿½ dei a volta inteira na lista, coloco aonde estou (lista com todos os elementos de mesma prioridade)
+		}									//a flag ï¿½ apenas para que esse check nï¿½o seja feito na primeira iteraï¿½ï¿½o
 		flag = 1;
 		if(lista->prio > prio){				//se a prioridade do elemento corrente for maior, vai pro anterior
 			lista = lista->ant;
 		}
-		else {								//se não for, vai para o próximo, mas antes:
-			if (lista->prox->prio > prio || lista->prox->prio < lista->prio) {	//checa se a prioridade do próximo é maior que a dele mesmo, se for é ali mesmo que deve ser inserido
-				return lista;													//(também checa se a do próximo é menor que a do atual, pois se for, é porquê sou o maior da lista)
+		else {								//se nï¿½o for, vai para o prï¿½ximo, mas antes:
+			if (lista->prox->prio > prio || lista->prox->prio < lista->prio) {	//checa se a prioridade do prï¿½ximo ï¿½ maior que a dele mesmo, se for ï¿½ ali mesmo que deve ser inserido
+				return lista;													//(tambï¿½m checa se a do prï¿½ximo ï¿½ menor que a do atual, pois se for, ï¿½ porquï¿½ sou o maior da lista)
 			}
 			lista = lista->prox;
 		}
 	}
 }
 
-/*Função que insere um elemento*/
+/*Funï¿½ï¿½o que insere um elemento*/
 No * insereElemento(No *lista,int pid,int prio) {
 	No *novo;
 	No *aux = lista;
-	if(lista->pid==0){				//Se for o primeiro elemento a ser inserido, apenas insere na posição já alocada
+	if(lista->pid==0){				//Se for o primeiro elemento a ser inserido, apenas insere na posiï¿½ï¿½o jï¿½ alocada
 		lista->pid=pid;
 		lista->prio=prio;
 		return lista;
 	}
-	lista = achaPos(lista,prio);	//chama a função que acha a posição na qual o elemento deve ser inserido
+	lista = achaPos(lista,prio);	//chama a funï¿½ï¿½o que acha a posiï¿½ï¿½o na qual o elemento deve ser inserido
 	novo = (No*)malloc(sizeof(No));
 	novo->pid = pid;
 	novo->prox = lista->prox;
@@ -54,11 +54,11 @@ No * insereElemento(No *lista,int pid,int prio) {
 	return aux;
 }
 
-/*Função que remove um elemento da lista*/
+/*Funï¿½ï¿½o que remove um elemento da lista*/
 No * removeElemento(No *lista, int pid) {
 	No *aux;
 	No *pos = lista;
-	if (lista->prox == lista) { //se estou tentando remover o último elemento, o elemento é apenas transformado em um elemento vazio
+	if (lista->prox == lista) { //se estou tentando remover o ï¿½ltimo elemento, o elemento ï¿½ apenas transformado em um elemento vazio
 		lista->pid = 0;
 		lista->prio = 0;
 		return lista;
@@ -73,29 +73,29 @@ No * removeElemento(No *lista, int pid) {
 	aux->prox = lista->prox;
 	lista->prox->ant = aux;
 	free(lista);
-	return pos;				//retorna a lista aonde eu estava anteriormente (ou no Nó anterior, se o atual foi removido)
+	return pos;				//retorna a lista aonde eu estava anteriormente (ou no Nï¿½ anterior, se o atual foi removido)
 }
 
-/*Função que avança o nó corrente*/
+/*Funï¿½ï¿½o que avanï¿½a o nï¿½ corrente*/
 No * proxElem(No *lista){
 	return lista->prox;
 }
 
-/*Função que recua o nó corrente*/
+/*Funï¿½ï¿½o que recua o nï¿½ corrente*/
 No * antElem(No *lista){
 	return lista->ant;
 }
 
-/*Função que libera a lista inteira*/
+/*Funï¿½ï¿½o que libera a lista inteira*/
 void destroiLista(No *lista) {
-	while (lista->pid) {				//quando o pid for zero, é por que só sobrou o elemento final (vazio)
+	while (lista->pid) {				//quando o pid for zero, ï¿½ por que sï¿½ sobrou o elemento final (vazio)
 		lista = removeElemento(lista,lista->pid);
 	}
 	free(lista);
 	return;
 }
 
-/*Função que imprime a lista inteira para propósitos de teste (podemos remover depois)*/
+/*Funï¿½ï¿½o que imprime a lista inteira para propï¿½sitos de teste (podemos remover depois)*/
 void printaLista(No *lista) {
 	int flag = 0;
 	No *aux = lista;
