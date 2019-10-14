@@ -12,6 +12,8 @@
 
 #include <string.h>
 
+#include <time.h>
+
 #include <signal.h>
 
 #include "procInfo.h"
@@ -24,12 +26,20 @@ void ChildHandler(int sinal);
 int afterRTProc(ProcInfo *);
 
 int flag = 0; //flag que diz se o processo deve escalonar ou olhar a pipe
+int flagRemove = 0;
+TipoProc flagTipo = -1; //flag que diz o tipo do processo que terminou a sua execução
+
+typedef struct realTimeProc{
+	int pid;
+	ProcInfo * procInfo;
+} RealTimeProc;
 
 
 int main (int argc, char *argv[]) { 
 	
-	int pidreader,fd[2], sizeOfProcInfo, realTime[60];
-	
+	int pidreader,fd[2], sizeOfProcInfo,i, pidProcRealTime = -1;
+	RealTimeProc * realTime[60];
+	clock_t startTime;
 	if(pipe(fd) < 0){
 			printf("Erro ao criar pipe");
 			exit(1);		
@@ -55,6 +65,10 @@ int main (int argc, char *argv[]) {
 		execv(arr[0], arr);
 	}
 
+	for( i = 0; i < 60; i++ ){
+		realTime[i] = NULL;
+	}
+
 	/*A partir daqui é o escalonador*/
 	No * listaProcs = CriaLista();
 	int pidProc;
@@ -62,7 +76,48 @@ int main (int argc, char *argv[]) {
 	signal(SIGALRM, AlrmHandler);
 	signal(SIGCHLD, ChildHandler);
 	alarm(1);
+	startTime = clock();
 	while (1) {
+		if (flagRemove > 1) { /* Um processo foi terminado (flagRemove == pid do processo terminado)*/
+			int pidRemovido = flagRemove;
+
+			if (pidRemovido == pidreader) {
+				printf("\nInterpretador terminou\n");
+				flagRemove = 0;
+			}
+			else {
+				printf("\nRemovendo Processo\n");
+				if (pidRemovido == listaProcs->pid ) { /* Se o processo é o que está rodando atualmente, desliga o alarme e fala pra próxima iteração do while escalonar*/
+					flagRemove = 0;
+					flag = 1;
+					listaProcs = removeElemento(listaProcs, pidRemovido);
+					ualarm(0,0);
+				}
+				else if(pidRemovido == pidProcRealTime){
+					int k,I,D;
+					int currentTime = (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60;
+					RealTimeProc * realTimeProcInfo = realTime[currentTime]; // Processo tempo real de dado segundo
+					I = atoi(realTimeProcInfo->procInfo->I);
+					D = atoi(realTimeProcInfo->procInfo->D);
+					pidProcRealTime = -1;
+					flag = 1;
+					flagRemove = 0;
+
+					for(k = I; k < I+D; k++){
+						free(realTime[k]);
+						realTime[k] = NULL;
+					}
+					alarm(0);
+					//CHECAR SE EXISTE UM PROCESSO ESPERANDO O FIM DESTE TODO
+
+
+				}
+				else { /* Se o processo terminado não é o que está rodando, continua normalmente */
+					flagRemove = 0;
+				}
+			}
+		}
+
 		if (flag == 0) /* Procura um processo novo na pipe e trata sua chegada da maneira apropriada*/ {
 			if ((procInfo = getProcInfo(fd)) != NULL) /* Há um processo novo*/ {
 				printf("\nNome do Processo: %s\n", procInfo->nomeProc);
@@ -93,45 +148,115 @@ int main (int argc, char *argv[]) {
 					}
 					else /* Real Time*/ {
 						if (afterRTProc(procInfo)) /* Process starts after another Real Time process */ {
+							int k,I,D;
+							char strI[2];
+							D = atoi(procInfo->D);
+							for(k = 0; k < 60 ; k++){
+								if(realTime[k] != NULL){
+									if(strcmp(realTime[k]->procInfo->nomeProc, procInfo->I) == 0)/* Achou o processo */  {
+										k += atoi(realTime[k]->procInfo->D);
+										I = k;
+
+										free(procInfo->I);
+										sprintf(strI,"%d",I);
+										procInfo->I = (char*)malloc(sizeof(char)*strlen(strI));
+										strcpy(procInfo->I, strI);
+										for(; k < I + D; k++){
+											if(realTime[k] != NULL) /* Já existe um processo que ocorre durante esse tempo */ {
+												break;
+
+												//TODO
+
+											}
+										}
+										if(k == (D+I)) /* Processo pode rodar normalmente */{
+											for(k = I; k < I + D; k++){
+												realTime[k] = (RealTimeProc*)malloc(sizeof(RealTimeProc));
+												realTime[k]->pid = pidProc;
+
+												realTime[k]->procInfo = procInfo;
+											}
+										}
+									}
+									else{
+										k = k + atoi(realTime[k]->procInfo->D);
+									}
+								}
+							}							
+
+							//TODO
+
 
 						}
 						else /* Process starts at arbitrary time */ {
+							int k, I, D;
+							I = atoi(procInfo->I);
+							D = atoi(procInfo->D);
+							
+							if(I + D > 60){
+								printf("O processo %s possui um tempo de execucao invalido, sera descartado", procInfo->nomeProc);
+								continue;
+							}
+							for(k = I; k < I + D; k++){
+								if(realTime[k] != NULL) /* Já existe um processo que ocorre durante esse tempo */ {
+									break;
 
+									//TODO
+
+								}
+							}
+							if(k == (D+I)) /* Processo pode rodar normalmente */{
+								for(k = I; k < I + D; k++){
+									realTime[k] = (RealTimeProc*)malloc(sizeof(RealTimeProc));
+									realTime[k]->pid = pidProc;
+									realTime[k]->procInfo = procInfo;
+								}
+							}
 						}
-
 					}
 				}
 			}
 		}
 
 		else if (flag == 1) /* Um alarme foi disparado */ {
+			int currentTime = (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60;
+			RealTimeProc * realTimeProcInfo = realTime[currentTime]; // Processo tempo real de dado segundo
+			printf("\n\nSegundo atual: %d\n", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
+			//Parar processo atual
+			if(flagTipo != RealTime){
+				printf("\n");
+				kill(listaProcs->pid, SIGSTOP);
+			}
+			else{
+				printf("\n");
+				if(pidProcRealTime != -1){
+					kill(pidProcRealTime, SIGSTOP);
+				}
+			}
 
-			printf("\n");
-			kill(listaProcs->pid, SIGSTOP);
-			listaProcs = proxElem(listaProcs);
-			kill(listaProcs->pid, SIGCONT);
-			ualarm(500000, 0);
-			flag = 0;
-
-		}
-		else if (flag > 1) { /* Um processo foi terminado (flag = pid do processo terminado)*/
-			int pidRemovido = flag;
-			if (pidRemovido == pidreader) {
-				printf("\nInterpretador terminou\n");
+			//Comecar proximo processo
+			if( realTimeProcInfo != NULL ) /* Ha um processo realTime */{
+				kill(realTimeProcInfo->pid,SIGCONT);
+				alarm(atoi(realTimeProcInfo->procInfo->D) - (currentTime - atoi(realTimeProcInfo->procInfo->I)));
+				pidProcRealTime = realTimeProcInfo->pid;
 				flag = 0;
+				flagTipo = RealTime;
 			}
 			else {
-				printf("\nRemovendo Processo\n");
-				if (pidRemovido == listaProcs->pid) { /* Se o processo é o que está rodando atualmente, desliga o alarme e fala pra próxima iteração do while escalonar*/
-					ualarm(0, 0);
-					flag = 1;
+				listaProcs = proxElem(listaProcs);
+				kill(listaProcs->pid, SIGCONT);
+				ualarm(500000, 0);
+				flag = 0;
+				pidProcRealTime = -1;
+				if(listaProcs->prio < 8){
+					flagTipo = Prioridade;
 				}
-				else { /* Se o processo terminado não é o que está rodando, continua normalmente */
-					flag = 0;
+				else{
+					flagTipo = RoundRobin;
 				}
-				listaProcs = removeElemento(listaProcs, pidRemovido);
 			}
 		}
+		
 	}
 	
 	close(fd[0]);
@@ -167,17 +292,19 @@ void AlrmHandler(int sinal)
 void ChildHandler(int sinal) {
 	int pidf;
 	pidf = waitpid((pid_t)(-1), 0, WNOHANG); /*WNOHANG é para que ele retorne caso não ache que imediato um filho que terminou*/
+	
 	if (pidf > 0) {
-		flag = pidf; /*Se algum filho terminou, coloca seu pid na flag*/
+		flagRemove = pidf; /*Se algum filho terminou, coloca seu pid na flag*/
 	}
 }
 
 int afterRTProc(ProcInfo * procInfo){
 	char *c;
 	for(c=procInfo->I ; *c ; c++){
-		if(*c < 48 || *c > 57) return 0;
+
+		if(*c < 48 || *c > 57) return 1;
 	}
-	return 1;
+	return 0;
 } 
 
 

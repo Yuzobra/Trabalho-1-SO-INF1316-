@@ -53,7 +53,7 @@ int main(int argc, char * argv[]) {
 		write(pipeWriterNum, &buf_size, sizeof(int));
 		write(pipeWriterNum, buf, buf_size);
 
-		sleep(4);
+		sleep(1);
 	}
 	
 	fclose(listaProc);
