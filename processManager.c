@@ -66,9 +66,11 @@ int main (int argc, char *argv[]) {
 		arr[0] = "./reader";
 		arr[1] = arg;
 		arr[2] = NULL;
-		//close(fd[0]);
+		close(fd[0]);
 		execv(arr[0], arr);
 	}
+
+	close(fd[1]);
 
 	for( i = 0; i < 60; i++ ){
 		realTime[i] = NULL;
@@ -92,7 +94,7 @@ int main (int argc, char *argv[]) {
 			}
 			else {
 				printf("\nRemovendo Processo\n");
-				if (pidRemovido == listaProcs->pid ) { /* Se o processo é o que está rodando atualmente, desliga o alarme e fala pra próxima iteração do while escalonar*/
+				if (pidRemovido == listaProcs->pid ) { /* Se o processo é prioridade ou roundrobin, desliga o alarme, remove da lista e fala pra próxima iteração do while escalonar*/
 					flagRemove = 0;
 					flag = 1;
 					listaProcs = removeElemento(listaProcs, pidRemovido);
@@ -126,9 +128,9 @@ int main (int argc, char *argv[]) {
 					free(procMorrendo);
 					alarm(0);
 				}
-				else { /* Se o processo terminado não é o que está rodando, continua normalmente */
-					flagRemove = 0;
-				}
+				//else { /* Se o processo terminado não é o que está rodando, continua normalmente */
+				//	flagRemove = 0;
+				//}
 			}
 		}
 
@@ -157,7 +159,6 @@ int main (int argc, char *argv[]) {
 							prioridade = 8;
 						}
 						else /* Prioridade */ { prioridade = atoi(procInfo->PR); }
-						printf("\nPrioridade: %d\n", prioridade);
 						fflush(stdout);
 						listaProcs = insereElemento(listaProcs, pidProc, prioridade);  /* este insereElemento vai inserir na posição correta */
 					}
@@ -235,7 +236,7 @@ int main (int argc, char *argv[]) {
 		else if (flag == 1) /* Um alarme foi disparado */ {
 			int currentTime = (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60;
 			RealTimeProc * realTimeProcInfo = realTime[currentTime]; // Processo tempo real de dado segundo
-			printf("\n\nSegundo atual: %d\n", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
+			//printf("\n\nSegundo atual: %d\n", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
 			//Parar processo atual
 			if(flagTipo != RealTime){
 				printf("\n");
@@ -274,7 +275,6 @@ int main (int argc, char *argv[]) {
 	}
 	
 	close(fd[0]);
-	close(fd[1]);
 }
 
 
