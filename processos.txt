@@ -1,8 +1,12 @@
-Run ZprocessoA1 PR=1
-Run ZprocessoB1 PR=1
-Run ZprocessoRT2 I=8 D=5
-Run ZprocessoRT1 I=6 D=10
-Run ZprocessoR1
-Run ZprocessoA4 PR=4
-
-
+Run P4a PR=4
+Run P4b PR=4
+Run RTa I=15 D=3
+Run P6a PR=6
+Run P3a PR=3
+Run RRa
+Run RTb I=30 D=40
+Run P6b PR=6
+Run RTb I=30 D=4
+Run RTc I=RTb D=4
+Run P1a PR=1
+Run RRb

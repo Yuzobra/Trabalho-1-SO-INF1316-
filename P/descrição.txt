@@ -1,0 +1,23 @@
+P4a 			//printa o próprio nome		- não morre
+
+P4b				//soma até 10000000000		- morre
+
+RTa 15 dur 3 	//fibonacci progressivo		- morre
+
+P6a 			//fibonacci de 44 repetido 	- não morre
+
+P3a 			//conta 10 segundos			- morre
+
+RRa 			//conta 15 segundos			- morre
+
+RTb 30 dur 40	//conflitante				- deve ser ignorado
+
+P6b 			//printa o próprio nome		- não morre
+
+RTb 30 dur 4 	//printa string				- morre na segunda iteração
+
+RTc RTb dur 4 	//printa string nova		- morre prematuramente quando RTb morrer
+
+P1a 			//soma até 10000000000		- morre
+
+RRb 			//printa o próprio nome		- não morre

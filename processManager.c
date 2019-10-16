@@ -142,10 +142,14 @@ int main (int argc, char *argv[]) {
 				printf("Duracao do Processo: %s\n", procInfo->D);
 				printf("Prioridade do Processo: %s\n", procInfo->PR);
 				fflush(stdout);
-				char *nome = (char*)malloc(sizeof(char)*(3 + strlen(procInfo->nomeProc)));
+				char *nome = (char*)malloc(sizeof(char)*(5 + strlen(procInfo->nomeProc)));
+				
 				nome[0] = '.';
 				nome[1] = '/';
-				nome[2] = '\0';
+				nome[2] = 'P';
+				nome[3] = '/';
+				nome[4] = '\0';
+				
 				strcat(nome, procInfo->nomeProc);
 				if ((pidProc = fork()) == 0) /* Cria o novo processo */ {
 					char *arg[] = { nome,NULL };
