@@ -85,6 +85,7 @@ int main (int argc, char *argv[]) {
 	alarm(1);
 	startTime = clock();
 	while (1) {
+		fflush(stdout);
 		if (flagRemove > 1) { /* Um processo foi terminado (flagRemove == pid do processo terminado)*/
 			int pidRemovido = flagRemove;
 
@@ -125,12 +126,13 @@ int main (int argc, char *argv[]) {
 							}
 						}
 					}
+
 					free(procMorrendo);
 					alarm(0);
 				}
-				//else { /* Se o processo terminado não é o que está rodando, continua normalmente */
-				//	flagRemove = 0;
-				//}
+				else { /* Se o processo terminado não é o que está rodando, continua normalmente */
+					flagRemove = 0;
+				}
 			}
 		}
 
@@ -143,7 +145,6 @@ int main (int argc, char *argv[]) {
 				printf("Prioridade do Processo: %s\n", procInfo->PR);
 				fflush(stdout);
 				char *nome = (char*)malloc(sizeof(char)*(5 + strlen(procInfo->nomeProc)));
-				
 				nome[0] = '.';
 				nome[1] = '/';
 				nome[2] = 'P';
@@ -169,14 +170,13 @@ int main (int argc, char *argv[]) {
 					else /* Real Time*/ {
 						if (afterRTProc(procInfo)) /* Process starts after another Real Time process */ {
 							int k,I,D;
-							char strI[2];
+							char strI[40];
 							D = atoi(procInfo->D);
 							for(k = 0; k < 60 ; k++){
 								if(realTime[k] != NULL){
 									if(strcmp(realTime[k]->procInfo->nomeProc, procInfo->I) == 0)/* Achou o processo */  {
 										k += atoi(realTime[k]->procInfo->D);
 										I = k;
-
 										free(procInfo->I);
 										sprintf(strI,"%d",I);
 										procInfo->I = (char*)malloc(sizeof(char)*strlen(strI));
@@ -238,9 +238,10 @@ int main (int argc, char *argv[]) {
 		}
 
 		else if (flag == 1) /* Um alarme foi disparado */ {
+			fflush(stdout);
 			int currentTime = (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60;
 			RealTimeProc * realTimeProcInfo = realTime[currentTime]; // Processo tempo real de dado segundo
-			//printf("\n\nSegundo atual: %d\n", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
+			printf("\n\nSegundo atual: %d", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
 			//Parar processo atual
 			if(flagTipo != RealTime){
 				printf("\n");
@@ -255,6 +256,7 @@ int main (int argc, char *argv[]) {
 
 			//Comecar proximo processo
 			if( realTimeProcInfo != NULL ) /* Ha um processo realTime */{
+				printf("Iniciando o processo: %s\n",realTimeProcInfo->procInfo->nomeProc);
 				kill(realTimeProcInfo->pid,SIGCONT);
 				alarm(atoi(realTimeProcInfo->procInfo->D) - (currentTime - atoi(realTimeProcInfo->procInfo->I)));
 				pidProcRealTime = realTimeProcInfo->pid;
@@ -264,6 +266,7 @@ int main (int argc, char *argv[]) {
 			else {
 				listaProcs = proxElem(listaProcs);
 				kill(listaProcs->pid, SIGCONT);
+				printf("Iniciando o processo de prioridade: %d\n",listaProcs->prio);
 				ualarm(500000, 0);
 				flag = 0;
 				pidProcRealTime = -1;
@@ -304,6 +307,7 @@ ProcInfo * getProcInfo(int fd[]){
 
 void AlrmHandler(int sinal)
 {
+	fflush(stdout);
 	flag = 1;
 }
 
