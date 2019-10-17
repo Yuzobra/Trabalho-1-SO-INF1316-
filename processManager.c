@@ -25,11 +25,15 @@ ProcInfo * getProcInfo(int fd[]);
 
 void AlrmHandler(int sinal);
 void ChildHandler(int sinal);
+void ContHandler(int sinal);
+void PauseHandler(int sinal);
+void ShowHandler(int sinal);
 int afterRTProc(ProcInfo *);
 
 int flag = 0; //flag que diz se o processo deve escalonar ou olhar a pipe
 int flagRemove = 0;
 TipoProc flagTipo = -1; //flag que diz o tipo do processo que terminou a sua execução
+No * listaProcs;
 
 typedef struct realTimeProc{
 	int pid;
@@ -39,8 +43,8 @@ typedef struct realTimeProc{
 
 int main (int argc, char *argv[]) { 
 	
-	int pidreader,fd[2], sizeOfProcInfo,i, pidProcRealTime = -1;
-	RealTimeProc * realTime[60];
+	int pidreader,fd[2], i, pidProcRealTime = -1;
+	RealTimeProc * realTime[60]
 	clock_t startTime;
 	Lista * waitingList;
 
@@ -77,11 +81,14 @@ int main (int argc, char *argv[]) {
 	}
 
 	/*A partir daqui é o escalonador*/
-	No * listaProcs = CriaLista();
+	listaProcs = CriaLista();
 	int pidProc;
 	ProcInfo *procInfo;
 	signal(SIGALRM, AlrmHandler);
 	signal(SIGCHLD, ChildHandler);
+	signal(SIGCONT, ContHandler);
+	signal(SIGUSR1, PauseHandler);
+	signal(SIGUSR2, ShowHandler);
 	alarm(1);
 	startTime = clock();
 	while (1) {
@@ -266,7 +273,12 @@ int main (int argc, char *argv[]) {
 			else {
 				listaProcs = proxElem(listaProcs);
 				kill(listaProcs->pid, SIGCONT);
-				printf("Iniciando o processo de prioridade: %d\n",listaProcs->prio);
+				if(listaProcs->prio<8){
+					printf("Iniciando um processo de prioridade: %d\n", listaProcs->prio);
+				}
+				else {
+					printf("Iniciando um round robin:\n");
+				}
 				ualarm(500000, 0);
 				flag = 0;
 				pidProcRealTime = -1;
@@ -329,4 +341,16 @@ int afterRTProc(ProcInfo * procInfo){
 	return 0;
 } 
 
+void PauseHandler(int sinal) {
+	kill(0, SIGSTOP);
+}
+void ContHandler(int sinal) {
+	ualarm(0, 0);
+	flag = 1;
+}
 
+void ShowHandler(int sinal) {
+	printf("\n\nSegundo atual: %d\n", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
+	printaLista(listaProcs);
+	fflush(stdout);
+}

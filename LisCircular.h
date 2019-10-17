@@ -24,6 +24,6 @@ No* antElem(No *lista);
 /*Função que libera a lista inteira*/
 void destroiLista(No *lista);
 
-/*Função que imprime a lista inteira para propósitos de teste (podemos remover depois)*/
+/*Função que imprime a lista inteira*/
 void printaLista(No *lista);
 
