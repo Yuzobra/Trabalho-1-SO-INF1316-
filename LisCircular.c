@@ -22,12 +22,15 @@ No * achaPos(No *lista, int prio){
 			if(lista==aux){return lista;}	//se eu j� dei a volta inteira na lista, coloco aonde estou (lista com todos os elementos de mesma prioridade)
 		}									//a flag � apenas para que esse check n�o seja feito na primeira itera��o
 		flag = 1;
-		if(lista->prio > prio){				//se a prioridade do elemento corrente for maior, vai pro anterior
-			lista = lista->ant;
+		if(lista->prio > prio){				//se o atual for maior que eu, avança, mas antes:
+			if (lista->prox->prio < lista->prio) { //verifica se o próximo é menor que o atual, se for, sou o menor da lista 
+				return lista;
+			}
+			lista = lista->prox;
 		}
-		else {								//se n�o for, vai para o pr�ximo, mas antes:
-			if (lista->prox->prio > prio || lista->prox->prio < lista->prio) {	//checa se a prioridade do pr�ximo � maior que a dele mesmo, se for � ali mesmo que deve ser inserido
-				return lista;													//(tamb�m checa se a do pr�ximo � menor que a do atual, pois se for, � porqu� sou o maior da lista)
+		else{								//se o atual for menor que eu, avança, mas antes:
+			if (lista->prox->prio > prio || lista->prox->prio < lista->prio) {	//verifica se o próximo é maior que o atual, se for, estou no lugar certo
+				return lista;				//(também verifica se a do próximo é menor que o atual, pois se for, sou o maior da lista)
 			}
 			lista = lista->prox;
 		}
@@ -99,6 +102,7 @@ void destroiLista(No *lista) {
 void printaLista(No *lista) {
 	int flag = 0;
 	No *aux = lista;
+	printf("\nPrioridades e Round Robins:\n");
 	while (lista->prio > 0) {
 		if(flag!=0){
 			if(lista==aux){
@@ -107,7 +111,12 @@ void printaLista(No *lista) {
 			}
 		}
 		flag=1;
-		printf("{%d ,prio: %d, ant: %d, prox:%d}\t", lista->pid, lista->prio, lista->ant->pid, lista->prox->pid);
+		if(lista->prio!=8){
+			printf("{%d ,prio: %d}\n", lista->pid, lista->prio);
+		}
+		else {
+			printf("{%d ,round robin}\n", lista->pid);
+		}
 		lista = lista->prox;
 	}
 	printf("\n");

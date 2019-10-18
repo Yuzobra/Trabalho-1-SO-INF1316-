@@ -32,8 +32,12 @@ int afterRTProc(ProcInfo *);
 
 int flag = 0; //flag que diz se o processo deve escalonar ou olhar a pipe
 int flagRemove = 0;
+int flagreader = 1;
 TipoProc flagTipo = -1; //flag que diz o tipo do processo que terminou a sua execução
 No * listaProcs;
+int pidProcRealTime;
+clock_t startTime;
+int pidreader;
 
 typedef struct realTimeProc{
 	int pid;
@@ -43,9 +47,9 @@ typedef struct realTimeProc{
 
 int main (int argc, char *argv[]) { 
 	
-	int pidreader,fd[2], i, pidProcRealTime = -1;
-	RealTimeProc * realTime[60]
-	clock_t startTime;
+	int fd[2], i;
+	pidProcRealTime = -1;
+	RealTimeProc * realTime[60];
 	Lista * waitingList;
 
 	waitingList = criaLista();
@@ -63,7 +67,7 @@ int main (int argc, char *argv[]) {
 
 	if(pidreader == 0){
 		 /* Este processo irá executar o reader */
-		printf("Iniciando processo 1\n");
+		printf("Iniciando Interpretador\n");
 	 	char arg[12];
 		char * arr[3];
 	 	sprintf(arg,"%d",fd[1]);
@@ -98,6 +102,7 @@ int main (int argc, char *argv[]) {
 
 			if (pidRemovido == pidreader) {
 				printf("\nInterpretador terminou\n");
+				flagreader = 0; /*flag que diz se o reader já terminou, pro handler de alarmes saber se precisa lidar com isso*/
 				flagRemove = 0;
 			}
 			else {
@@ -274,10 +279,10 @@ int main (int argc, char *argv[]) {
 				listaProcs = proxElem(listaProcs);
 				kill(listaProcs->pid, SIGCONT);
 				if(listaProcs->prio<8){
-					printf("Iniciando um processo de prioridade: %d\n", listaProcs->prio);
+					printf("\nIniciando um processo de prioridade: %d\n", listaProcs->prio);
 				}
 				else {
-					printf("Iniciando um round robin:\n");
+					printf("\nIniciando um round robin:\n");
 				}
 				ualarm(500000, 0);
 				flag = 0;
@@ -342,15 +347,32 @@ int afterRTProc(ProcInfo * procInfo){
 } 
 
 void PauseHandler(int sinal) {
-	kill(0, SIGSTOP);
+	if (pidProcRealTime != -1) {
+		kill(pidProcRealTime, SIGTSTP);
+	}
+	kill(listaProcs->pid, SIGTSTP);
+	if (flagreader==1) {
+		kill(pidreader, SIGTSTP);
+	}
+	printf("\n--------------PAUSED--------------\n");
+	raise(SIGTSTP);
 }
 void ContHandler(int sinal) {
+	if (flagreader==1) {
+		kill(pidreader, SIGCONT);
+	}
 	ualarm(0, 0);
 	flag = 1;
 }
 
 void ShowHandler(int sinal) {
+	if (flagreader == 1) {
+		kill(pidreader, SIGTSTP);
+	}
+	printf("\n---------------SHOW---------------\n");
 	printf("\n\nSegundo atual: %d\n", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
 	printaLista(listaProcs);
+	/*SE PUDER, ADICIONE UMA FUNÇÂO QUE EXIBE OS PROCESSOS DE REAL TIME*/
 	fflush(stdout);
+	raise(SIGTSTP);
 }
