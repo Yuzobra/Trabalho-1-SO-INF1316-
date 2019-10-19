@@ -305,6 +305,7 @@ int main (int argc, char *argv[]) {
 					printf("\nIniciando um round robin:\n");
 				}
 				ualarm(500000, 0);
+				printf("Tempo depois do ualarm: %d\n", ualarm(500000,0));
 
 				flag = 0;
 				pidProcRealTime = -1;
@@ -343,13 +344,16 @@ ProcInfo * getProcInfo(int fd[]){
 	}
 }
 
-void AlrmHandler(int sinal)
-{
+void AlrmHandler(int sinal){
+	printf("ALARM HANDLER\n");
+
 	fflush(stdout);
 	flag = 1;
 }
 
 void ChildHandler(int sinal) {
+	printf("CHILD HANDLER\n");
+	
 	int pidf;
 	pidf = waitpid((pid_t)(-1), 0, WNOHANG); /*WNOHANG é para que ele retorne caso não ache que imediato um filho que terminou*/
 	
@@ -368,6 +372,7 @@ int afterRTProc(ProcInfo * procInfo){
 } 
 
 void PauseHandler(int sinal) {
+	printf("mandei pausar\n");
 	if (pidProcRealTime != -1) {
 		kill(pidProcRealTime, SIGTSTP);
 	}
