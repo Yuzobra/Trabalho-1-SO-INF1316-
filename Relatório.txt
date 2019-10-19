@@ -1,0 +1,32 @@
+RELATÓRIO T1 - INF1019 - MARKUS ENDLER
+
+Guilherme Murad - 1810576
+Yuri Zoel Brasil - 1710730
+
+Os programas que serão executados, na ordem de entrada, são:
+
+P4a - Programa de prioridade 4 que exibe o próprio nome a cada 0.1 segundos infinitamente (ou seja, sempre que executar, irá imprimir 'P4a' cerca de 5 vezes).
+P4b - Programa de prioridade 4 que soma até 10000000000, exibindo o progresso em intervalos bem grandes, e então morre.
+RTa - Programa de Real Time inserido no segundo 15 com duração de 3 segundos que calcula a sequência de fibonacci recursivamente para sempre.
+P6a - Programa de prioridade 6 que calcula e exibe o 44º número de fibonacci em loop para sempre (isso demora mais do que os 0.5 segundos de sua fatia de tempo, portanto só exibirá o resultado em certas execuções).
+P3a - Programa de prioridade 3 que faz um countdown de 10 segundos, imprimindo a cada 0.1 segundos, até chegar ao 0 e morrer. 
+RRa - Programa de Round Robin que faz um countdown de 15 segundos, imprimindo a cada 0.1 segundos, até chegar ao 0 e morrer. 
+RTb - Nesse momento, esse programa de real time é inserido com uma duração que irá exceder os 60 segundos e será portanto descartado.
+P6b - Programa de prioridade 6 que exibe o próprio nome a cada 0.1 segundos infinitamente (ou seja, sempre que executar, irá imprimir 'P6a' cerca de 5 vezes).
+RTb - Agora, esse programa é inserido novamente porém com uma duração válida de 4 segundos no segundo 30, ele exibe um caractér de cada vez em uma string.
+RTc - Esse programa de real time é dependente de RTb, e portanto começará junto com ele e morrerá junto com ele quando RTb morrer em sua segunda execução. RTc também imprime uma string um caractér de cada vez.
+RTd - Esse programa de real time é dependente de RTb, entretanto conflita com RTc, logo irá para a fila de espera, mas irá ser removido da lista quanto RTb morrer. Assim como RTc, imprime uma string um caractér de cada vez.
+P4b - Programa de prioridade 1 que soma até 10000000000, exibindo o progresso em intervalos bem grandes, e então morre. 
+RRb - Programa de Round Robin que exibe o próprio nome a cada 0.1 segundos infinitamente (ou seja, sempre que executar, irá imprimir 'RRb' cerca de 5 vezes).
+
+Após receber todos esses, eles estarão escalonados de forma que:
+P1a -> P3a -> P4a -> P4b -> P6a -> P6b -> RRa -> RRb (nota: processos de mesma prioridades podem estar com a ordem invertida nesse escalonamento, dependendo de quem estiver executando quando forem inseridos, o escalonamento ainda estará correto).
+E nos segundo 15 será executado RTa por 3 segundos, no segundo 30 o RTb por 4 segundos seguido por RTc por 4 segundos. RTd nunca terá a chance de ser executado, não irá sequer para a fila de prontos.
+
+Conforme o tempo avança, P4b, P3a, RRa, P1a e RTb (e RTc, RTd, por consequência) irão aos poucos acabar de executar e serão removidos.
+Resultando em um escalonamento como a seguir:
+P4a -> P6a -> P6b -> RRb
+E no segundo 15 será executado RTa por 3 segundos.
+
+Isso tudo pode ser observado quando o trabalho é executado atravéz da execução do módulo de debug, que permite pausar e resumir a execução, tal como exibir a fila de processos tal como está escalonada em um determinado momento.
+Atravéz disso, podemos observar o funcionamento do código, cujo comportamento está como esperado, entregando a cada processo a fatia de tempo correta, na ordem correta, sem executar processos simultâneamente. Os processos que morrem são corretamente removidos do escalonamento, os processos que executam infinitamente apresentam consistência e os sinais são enviados e tratados corretamente.
