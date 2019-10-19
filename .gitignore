@@ -1,6 +1,8 @@
+.vscode/**
+P/*.*
+*.*
 !*.c
 !*.txt
 !*.h
 !*.md
 !*.sh
-.vscode/**
