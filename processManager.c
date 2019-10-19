@@ -41,6 +41,7 @@ int pidreader;
 
 typedef struct realTimeProc{
 	int pid;
+	int pidAnt;
 	ProcInfo * procInfo;
 } RealTimeProc;
 
@@ -116,14 +117,18 @@ int main (int argc, char *argv[]) {
 				else if(pidRemovido == pidProcRealTime){
 					int k,I,D;
 					int currentTime = (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60;
-					RealTimeProc * realTimeProcInfo = realTime[currentTime]; // Processo tempo real de dado segundo
+					RealTimeProc * realTimeProcInfo = realTime[currentTime]; // Processo real time de dado segundo
 					ProcInfo * procMorrendo = realTimeProcInfo->procInfo;
+					ProcInfo * procDependente = NULL;
 					I = atoi(procMorrendo->I);
 					D = atoi(procMorrendo->D);
 					pidProcRealTime = -1;
 					flag = 1;
 					flagRemove = 0;
-
+					if(realTime[I+D] != NULL && realTime[I+D]->pidAnt == realTime[I]->pid) /* Um processo era dependente do que morreu */{
+						procDependente = realTime[I+D]->procInfo; // Pega informação do processo depentende
+						D = D + atoi(realTime[I+D]->procInfo->D); // Soma a duração do processo dependente
+					}
 					for(k = I; k < I+D; k++){
 						free(realTime[k]);
 						realTime[k] = NULL;
@@ -137,9 +142,19 @@ int main (int argc, char *argv[]) {
 								realTime[k] = priorityProcInfo;
 							}
 						}
+						if(procDependente != NULL){
+							priorityProcInfo = verificaLista(waitingList,procDependente,realTime);
+							if(priorityProcInfo != NULL) {
+								I = atoi(priorityProcInfo->procInfo->I);
+								D = atoi(priorityProcInfo->procInfo->D);
+								for(k = I; k < I+D; k++){
+									realTime[k] = priorityProcInfo;
+								}
+							}
+						}
 					}
-
 					free(procMorrendo);
+					if(procDependente != NULL) free(procDependente);
 					alarm(0);
 				}
 				else { /* Se o processo terminado não é o que está rodando, continua normalmente */
@@ -187,6 +202,7 @@ int main (int argc, char *argv[]) {
 							for(k = 0; k < 60 ; k++){
 								if(realTime[k] != NULL){
 									if(strcmp(realTime[k]->procInfo->nomeProc, procInfo->I) == 0)/* Achou o processo */  {
+										int pidAnt = realTime[k]->pidAnt;
 										k += atoi(realTime[k]->procInfo->D);
 										I = k;
 										free(procInfo->I);
@@ -197,6 +213,7 @@ int main (int argc, char *argv[]) {
 											if(realTime[k] != NULL) /* Já existe um processo que ocorre durante esse tempo */ {
 												RealTimeProc *newProc = (RealTimeProc*)malloc(sizeof(RealTimeProc));
 												newProc->pid = pidProc;
+												newProc->pidAnt = pidAnt;
 												newProc->procInfo = procInfo;
 												printf("Processos conflitantes, colocando ele na lista de espera");
 												insFinal(waitingList, newProc);
@@ -257,7 +274,8 @@ int main (int argc, char *argv[]) {
 			//Parar processo atual
 			if(flagTipo != RealTime){
 				printf("\n");
-				kill(listaProcs->pid, SIGSTOP);
+				printf("Parando o processo de pid: %d\n", listaProcs->pid);
+				printf("Retorno do SIGSTOP: %d\n",kill(listaProcs->pid, SIGSTOP));
 			}
 			else{
 				printf("\n");
@@ -267,7 +285,7 @@ int main (int argc, char *argv[]) {
 			}
 
 			//Comecar proximo processo
-			if( realTimeProcInfo != NULL ) /* Ha um processo realTime */{
+			if( realTimeProcInfo != NULL ) /* Ha um processo realTime */ {
 				printf("Iniciando o processo: %s\n",realTimeProcInfo->procInfo->nomeProc);
 				kill(realTimeProcInfo->pid,SIGCONT);
 				alarm(atoi(realTimeProcInfo->procInfo->D) - (currentTime - atoi(realTimeProcInfo->procInfo->I)));
@@ -276,7 +294,9 @@ int main (int argc, char *argv[]) {
 				flagTipo = RealTime;
 			}
 			else {
+				printf("PID DO PROCESSO ANTERIOR: %d\n", listaProcs->pid);
 				listaProcs = proxElem(listaProcs);
+				printf("PID DO PROCESSO ATUAL: %d\n", listaProcs->pid);
 				kill(listaProcs->pid, SIGCONT);
 				if(listaProcs->prio<8){
 					printf("\nIniciando um processo de prioridade: %d\n", listaProcs->prio);
@@ -285,6 +305,7 @@ int main (int argc, char *argv[]) {
 					printf("\nIniciando um round robin:\n");
 				}
 				ualarm(500000, 0);
+
 				flag = 0;
 				pidProcRealTime = -1;
 				if(listaProcs->prio < 8){
@@ -357,6 +378,7 @@ void PauseHandler(int sinal) {
 	printf("\n--------------PAUSED--------------\n");
 	raise(SIGTSTP);
 }
+
 void ContHandler(int sinal) {
 	if (flagreader==1) {
 		kill(pidreader, SIGCONT);
