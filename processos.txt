@@ -6,8 +6,8 @@ Run P3a PR=3
 Run RRa
 Run RTb I=30 D=40
 Run P6b PR=6
-Run RTb I=20 D=7
-Run RTc I=RTb D=7
-Run RTd I=RTb D=7
+Run RTb I=20 D=4
+Run RTc I=RTb D=4
+Run RTd I=RTb D=4
 Run P1a PR=1
 Run RRb

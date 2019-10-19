@@ -77,6 +77,7 @@ RealTimeProc * verificaLista(Lista * lista, ProcInfo * procMorrendo, RealTimePro
     No * no;
     IProcMorrendo = atoi(procMorrendo->I);
     DProcMorrendo = atoi(procMorrendo->D);
+
     for(no = lista->inicio; no != NULL; no = no->prox){
         IProcLista = atoi(no->realTimeProc->procInfo->I);
         DProcLista = atoi(no->realTimeProc->procInfo->D);
@@ -84,7 +85,6 @@ RealTimeProc * verificaLista(Lista * lista, ProcInfo * procMorrendo, RealTimePro
         if(  ((IProcLista >= IProcMorrendo) && (IProcLista <= (IProcMorrendo + DProcMorrendo))) ||
              ((IProcLista + DProcLista) >= IProcMorrendo && (IProcLista + DProcLista) <= (IProcMorrendo + DProcMorrendo)) ||
              ((IProcLista <= IProcMorrendo) && (IProcLista + DProcLista >= IProcMorrendo + DProcMorrendo)))/* Processo ocorre durante a execução do processo morrendo */{
-            
             //verificar se ele conflita com outro processo
             for(k = IProcLista; k < IProcLista + DProcLista ; k++){
                 if(realTime[k] != NULL) /* Conflita com outro processo */{
@@ -96,6 +96,8 @@ RealTimeProc * verificaLista(Lista * lista, ProcInfo * procMorrendo, RealTimePro
             else /* Processo na lista não conflita com nenhum processo no escalonamento e pode rodar */ {
                 RealTimeProc * procFila = no->realTimeProc;
                 deletaNo(no);
+                if(no->ant == NULL) lista->inicio = no->prox;
+                if(no->prox == NULL) lista->fim = no->ant;
                 return procFila;
             }
         }
@@ -126,7 +128,7 @@ void printListaEnc(Lista * lista){
     No * no;
     printf("Lista de espera:\n");
     for(no = lista->inicio; no != NULL; no = no->prox){
-        printf("{%d , %s, I: %s, D: %s}\n",no->realTimeProc->pid,no->realTimeProc->procInfo->nomeProc,no->realTimeProc->procInfo->I, no->realTimeProc->procInfo->D);
+        printf("{%d , %s, I: %s, D: %d}\n",no->realTimeProc->pid,no->realTimeProc->procInfo->nomeProc,no->realTimeProc->procInfo->I, atoi(no->realTimeProc->procInfo->D));
     }
 }
 
@@ -150,6 +152,8 @@ static void deletaNo(No* no){
         if(no->prox != NULL){
             no->prox->ant = no->ant;
         }
+        printf("antes do free no\n");
         free(no);
+        printf("depois do free no\n");
     }
 }

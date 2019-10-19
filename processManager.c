@@ -132,7 +132,6 @@ int main (int argc, char *argv[]) {
 
 					}
 					for(k = I; k < I+D; k++){
-						free(realTime[k]);
 						realTime[k] = NULL;
 					}
 					
@@ -156,7 +155,13 @@ int main (int argc, char *argv[]) {
 							}
 						}
 					}
+					free(procMorrendo->D);
+					free(procMorrendo->I);
+					free(procMorrendo->nomeProc);
+					free(procMorrendo->tipoProc);
+					free(procMorrendo->PR);
 					free(procMorrendo);
+					free(realTimeProcInfo);
 					if(procDependente != NULL) free(procDependente);
 					alarm(0);
 				}
@@ -357,10 +362,11 @@ void printRealTime(){
 	printf("Processos Real Time:\n");
 	for(i = 0; i < 60; i++){
 		if(realTime[i] != NULL){
-	        printf("{%d , %s, I: %s, D: %s}\n",realTime[i]->pid,realTime[i]->procInfo->nomeProc,realTime[i]->procInfo->I, realTime[i]->procInfo->D);
+	        printf("{%d , %s, I: %s, D: %d}\n",realTime[i]->pid,realTime[i]->procInfo->nomeProc,realTime[i]->procInfo->I, atoi(realTime[i]->procInfo->D));
 			i+= atoi(realTime[i]->procInfo->D);
 		}
 	}
+	printf("\n");
 	printListaEnc(waitingList);
 }
 
@@ -400,7 +406,6 @@ void ShowHandler(int sinal) {
 	printf("\n\nSegundo atual: %d\n", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
 
 	printaListaCirc(listaProcs);
-	/*SE PUDER, ADICIONE UMA FUNÇÂO QUE EXIBE OS PROCESSOS DE REAL TIME*/
 	printRealTime();
 	raise(SIGTSTP);
 }
