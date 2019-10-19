@@ -5,6 +5,7 @@
 void procpause(int pid);
 void procshow(int pid);
 void procresume(int pid);
+
 int main (int argc, char *argv[]) { 
 	int pidmanager;
 	char command[7];
@@ -27,6 +28,7 @@ int main (int argc, char *argv[]) {
 		}
 	}
 }
+
 void procpause(int pid) {
 	kill(pid, SIGUSR1);
 }

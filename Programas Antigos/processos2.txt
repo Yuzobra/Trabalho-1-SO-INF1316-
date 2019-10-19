@@ -1,6 +1,0 @@
-Run ZprocessoA1 PR=1
-Run ZprocessoB1 PR=1
-Run ZprocessoRT2 I=8 D=5
-Run ZprocessoRT1 I=6 D=10
-Run ZprocessoA4 PR=4
-Run ZprocessoR1

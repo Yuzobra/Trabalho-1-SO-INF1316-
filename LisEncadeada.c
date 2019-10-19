@@ -9,6 +9,7 @@ typedef struct no No;
 
 typedef struct realTimeProc{
 	int pid;
+    int pidAnt;
 	ProcInfo * procInfo;
 } RealTimeProc;
 
@@ -74,7 +75,6 @@ int listaVazia(Lista * lista){
 RealTimeProc * verificaLista(Lista * lista, ProcInfo * procMorrendo, RealTimeProc * realTime[]) /* Verifica se há algum processo esperando o fim do processo terminando */ {
     int IProcMorrendo, DProcMorrendo, IProcLista, DProcLista, k, flag;
     No * no;
-    printf("Inicio processo morrendo: %s\nDuracao processo morrendo: %s\n",procMorrendo->I, procMorrendo->D);
     IProcMorrendo = atoi(procMorrendo->I);
     DProcMorrendo = atoi(procMorrendo->D);
     for(no = lista->inicio; no != NULL; no = no->prox){
@@ -102,6 +102,34 @@ RealTimeProc * verificaLista(Lista * lista, ProcInfo * procMorrendo, RealTimePro
     }
     return NULL;
 }
+
+void removerDependentes(Lista * lista, RealTimeProc * procMorrendo){
+    int IProcMorrendo, DProcMorrendo, IProcLista, DProcLista, k, flag;
+    No * no;
+    IProcMorrendo = atoi(procMorrendo->procInfo->I);
+    DProcMorrendo = atoi(procMorrendo->procInfo->D);
+    for(no = lista->inicio; no != NULL; no = no->prox){
+        if(no->realTimeProc->pidAnt == procMorrendo->pid){
+            free(no->realTimeProc->procInfo);
+            free(no->realTimeProc);
+            
+            if(no->ant == NULL) lista->inicio = no->prox;
+            if(no->prox == NULL) lista->fim = no->ant;
+            deletaNo(no);
+
+        }
+    }
+}
+
+
+void printListaEnc(Lista * lista){
+    No * no;
+    printf("Lista de espera:\n");
+    for(no = lista->inicio; no != NULL; no = no->prox){
+        printf("{%d , %s, I: %s, D: %s}\n",no->realTimeProc->pid,no->realTimeProc->procInfo->nomeProc,no->realTimeProc->procInfo->I, no->realTimeProc->procInfo->D);
+    }
+}
+
 
 //Funcoes estaticas:
 

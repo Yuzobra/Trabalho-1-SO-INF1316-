@@ -1,29 +1,29 @@
 typedef struct no {
 	//void *pid;		//Ponteiro pro programa
 	int pid;
-	int prio;			//prioição Na Lista
-	struct no *prox;	//Ponteiro pro próximo nó
-	struct no *ant;		//Ponteiro pro nó anterior
+	int prio;			//prioridade do processo
+	struct no *prox;	//Ponteiro pro proximo no
+	struct no *ant;		//Ponteiro pro no anterior
 }No;
 
-/*Função que cria a lista com um único elemento nulo*/
+/*Funcao que cria a lista com um ï¿½nico elemento nulo*/
 No* CriaLista();
 
-/*Função que insere um elemento*/
+/*Funcao que insere um elemento*/
 No* insereElemento(No *lista, int pid, int prio);
 
-/*Função que remove um elemento da lista*/
+/*Funcao que remove um elemento da lista*/
 No* removeElemento(No *lista, int pid);
 
-/*Função que avança o nó corrente*/
+/*Funcao que avanca o no corrente*/
 No* proxElem(No *lista);
 
-/*Função que recua o nó corrente*/
+/*Funcao que recua o no corrente*/
 No* antElem(No *lista);
 
-/*Função que libera a lista inteira*/
+/*Funcao que libera a lista inteira*/
 void destroiLista(No *lista);
 
-/*Função que imprime a lista inteira*/
-void printaLista(No *lista);
+/*Funcao que imprime a lista inteira*/
+void printaListaCirc(No *lista);
 

@@ -38,6 +38,8 @@ No * listaProcs;
 int pidProcRealTime;
 clock_t startTime;
 int pidreader;
+Lista * waitingList;
+RealTimeProc * realTime[60];
 
 typedef struct realTimeProc{
 	int pid;
@@ -50,8 +52,6 @@ int main (int argc, char *argv[]) {
 	
 	int fd[2], i;
 	pidProcRealTime = -1;
-	RealTimeProc * realTime[60];
-	Lista * waitingList;
 
 	waitingList = criaLista();
 	if(pipe(fd) < 0){
@@ -80,7 +80,7 @@ int main (int argc, char *argv[]) {
 	}
 
 	close(fd[1]);
-
+	setbuf(stdout, 0);
 	for( i = 0; i < 60; i++ ){
 		realTime[i] = NULL;
 	}
@@ -97,7 +97,6 @@ int main (int argc, char *argv[]) {
 	alarm(1);
 	startTime = clock();
 	while (1) {
-		fflush(stdout);
 		if (flagRemove > 1) { /* Um processo foi terminado (flagRemove == pid do processo terminado)*/
 			int pidRemovido = flagRemove;
 
@@ -125,14 +124,18 @@ int main (int argc, char *argv[]) {
 					pidProcRealTime = -1;
 					flag = 1;
 					flagRemove = 0;
-					if(realTime[I+D] != NULL && realTime[I+D]->pidAnt == realTime[I]->pid) /* Um processo era dependente do que morreu */{
+					if(realTime[I+D] != NULL && realTime[I+D]->pidAnt == realTimeProcInfo->pid) /* Um processo era dependente do que morreu */{
 						procDependente = realTime[I+D]->procInfo; // Pega informação do processo depentende
-						D = D + atoi(realTime[I+D]->procInfo->D); // Soma a duração do processo dependente
+						D = D + atoi(procDependente->D); // Soma a duração do processo dependente
+
+						removerDependentes(waitingList, realTimeProcInfo); // ver se há algum outro dependente do processo que morreu na lista de espera
+
 					}
 					for(k = I; k < I+D; k++){
 						free(realTime[k]);
 						realTime[k] = NULL;
 					}
+					
 					if(!listaVazia(waitingList)) /* Verifica se há processo esperando o fim deste, se há, coloca ele no vetor de realTime */ {
 						RealTimeProc * priorityProcInfo = verificaLista(waitingList,procMorrendo,realTime);
 						if(priorityProcInfo != NULL) {
@@ -167,10 +170,6 @@ int main (int argc, char *argv[]) {
 			if ((procInfo = getProcInfo(fd)) != NULL) /* Há um processo novo*/ {
 				printf("\nNome do Processo: %s\n", procInfo->nomeProc);
 				printf("Tipo do Processo: %s\n", procInfo->tipoProc);
-				printf("Inicio do Processo: %s\n", procInfo->I);
-				printf("Duracao do Processo: %s\n", procInfo->D);
-				printf("Prioridade do Processo: %s\n", procInfo->PR);
-				fflush(stdout);
 				char *nome = (char*)malloc(sizeof(char)*(5 + strlen(procInfo->nomeProc)));
 				nome[0] = '.';
 				nome[1] = '/';
@@ -191,7 +190,6 @@ int main (int argc, char *argv[]) {
 							prioridade = 8;
 						}
 						else /* Prioridade */ { prioridade = atoi(procInfo->PR); }
-						fflush(stdout);
 						listaProcs = insereElemento(listaProcs, pidProc, prioridade);  /* este insereElemento vai inserir na posição correta */
 					}
 					else /* Real Time*/ {
@@ -202,7 +200,7 @@ int main (int argc, char *argv[]) {
 							for(k = 0; k < 60 ; k++){
 								if(realTime[k] != NULL){
 									if(strcmp(realTime[k]->procInfo->nomeProc, procInfo->I) == 0)/* Achou o processo */  {
-										int pidAnt = realTime[k]->pidAnt;
+										int pidAnt = realTime[k]->pid;
 										k += atoi(realTime[k]->procInfo->D);
 										I = k;
 										free(procInfo->I);
@@ -224,7 +222,7 @@ int main (int argc, char *argv[]) {
 											for(k = I; k < I + D; k++){
 												realTime[k] = (RealTimeProc*)malloc(sizeof(RealTimeProc));
 												realTime[k]->pid = pidProc;
-
+												realTime[k]->pidAnt = pidAnt;
 												realTime[k]->procInfo = procInfo;
 											}
 										}
@@ -248,6 +246,7 @@ int main (int argc, char *argv[]) {
 									RealTimeProc *newProc = (RealTimeProc*)malloc(sizeof(RealTimeProc));
 									newProc->pid = pidProc;
 									newProc->procInfo = procInfo;
+									newProc->pidAnt = -1;
 									printf("Processos conflitantes, colocando ele na lista de espera");
 									insFinal(waitingList, newProc);
 									break;
@@ -267,15 +266,13 @@ int main (int argc, char *argv[]) {
 		}
 
 		else if (flag == 1) /* Um alarme foi disparado */ {
-			fflush(stdout);
 			int currentTime = (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60;
 			RealTimeProc * realTimeProcInfo = realTime[currentTime]; // Processo tempo real de dado segundo
 			printf("\n\nSegundo atual: %d", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
 			//Parar processo atual
 			if(flagTipo != RealTime){
 				printf("\n");
-				printf("Parando o processo de pid: %d\n", listaProcs->pid);
-				printf("Retorno do SIGSTOP: %d\n",kill(listaProcs->pid, SIGSTOP));
+				kill(listaProcs->pid, SIGSTOP);
 			}
 			else{
 				printf("\n");
@@ -294,9 +291,7 @@ int main (int argc, char *argv[]) {
 				flagTipo = RealTime;
 			}
 			else {
-				printf("PID DO PROCESSO ANTERIOR: %d\n", listaProcs->pid);
 				listaProcs = proxElem(listaProcs);
-				printf("PID DO PROCESSO ATUAL: %d\n", listaProcs->pid);
 				kill(listaProcs->pid, SIGCONT);
 				if(listaProcs->prio<8){
 					printf("\nIniciando um processo de prioridade: %d\n", listaProcs->prio);
@@ -305,7 +300,6 @@ int main (int argc, char *argv[]) {
 					printf("\nIniciando um round robin:\n");
 				}
 				ualarm(500000, 0);
-				printf("Tempo depois do ualarm: %d\n", ualarm(500000,0));
 
 				flag = 0;
 				pidProcRealTime = -1;
@@ -345,15 +339,10 @@ ProcInfo * getProcInfo(int fd[]){
 }
 
 void AlrmHandler(int sinal){
-	printf("ALARM HANDLER\n");
-
-	fflush(stdout);
 	flag = 1;
 }
 
 void ChildHandler(int sinal) {
-	printf("CHILD HANDLER\n");
-	
 	int pidf;
 	pidf = waitpid((pid_t)(-1), 0, WNOHANG); /*WNOHANG é para que ele retorne caso não ache que imediato um filho que terminou*/
 	
@@ -362,17 +351,28 @@ void ChildHandler(int sinal) {
 	}
 }
 
+void printRealTime(){
+	RealTimeProc * realTimeProc;
+	int i;
+	printf("Processos Real Time:\n");
+	for(i = 0; i < 60; i++){
+		if(realTime[i] != NULL){
+	        printf("{%d , %s, I: %s, D: %s}\n",realTime[i]->pid,realTime[i]->procInfo->nomeProc,realTime[i]->procInfo->I, realTime[i]->procInfo->D);
+			i+= atoi(realTime[i]->procInfo->D);
+		}
+	}
+	printListaEnc(waitingList);
+}
+
 int afterRTProc(ProcInfo * procInfo){
 	char *c;
 	for(c=procInfo->I ; *c ; c++){
-
 		if(*c < 48 || *c > 57) return 1;
 	}
 	return 0;
 } 
 
 void PauseHandler(int sinal) {
-	printf("mandei pausar\n");
 	if (pidProcRealTime != -1) {
 		kill(pidProcRealTime, SIGTSTP);
 	}
@@ -398,8 +398,9 @@ void ShowHandler(int sinal) {
 	}
 	printf("\n---------------SHOW---------------\n");
 	printf("\n\nSegundo atual: %d\n", (int)(((double)(clock() - startTime)) / CLOCKS_PER_SEC) % 60);
-	printaLista(listaProcs);
+
+	printaListaCirc(listaProcs);
 	/*SE PUDER, ADICIONE UMA FUNÇÂO QUE EXIBE OS PROCESSOS DE REAL TIME*/
-	fflush(stdout);
+	printRealTime();
 	raise(SIGTSTP);
 }

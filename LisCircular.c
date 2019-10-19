@@ -99,7 +99,7 @@ void destroiLista(No *lista) {
 }
 
 /*Fun��o que imprime a lista inteira para prop�sitos de teste (podemos remover depois)*/
-void printaLista(No *lista) {
+void printaListaCirc(No *lista) {
 	int flag = 0;
 	No *aux = lista;
 	printf("\nPrioridades e Round Robins:\n");
