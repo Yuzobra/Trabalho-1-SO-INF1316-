@@ -2,7 +2,7 @@ P4a 			//printa o próprio nome		- não morre
 
 P4b				//soma até 10000000000		- morre
 
-RTa 15 dur 3 	//fibonacci progressivo		- morre
+RTa 15 dur 3 	//fibonacci progressivo		- não morre
 
 P6a 			//fibonacci de 44 repetido 	- não morre
 
